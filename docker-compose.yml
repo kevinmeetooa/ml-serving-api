@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: serving-api:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - API_KEY
+  master:
+    image: locustio/locust
+    ports:
+     - "8089:8089"
+    environment:
+      - API_KEY
+    volumes:
+      - ./:/mnt/locust
+    command: -f /mnt/locust/src/tests/load_test/load_test.py --master -H http://api:5000/ --users 64 --spawn-rate 0.133
+
+  worker:
+    image: locustio/locust
+    environment:
+      - API_KEY
+    volumes:
+      - ./:/mnt/locust
+    command: -f /mnt/locust/src/tests/load_test/load_test.py --worker --master-host master
